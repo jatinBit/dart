@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block homeActive %}active{% endblock homeActive %}
+{% block css %}
+{% load static %}
+<style>
+    #msg{
+        height: 80%;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Anton', sans-serif;
+        font-family: 'Mochiy Pop P One', sans-serif;
+    }
+    /* h1 {
+    font-size: clamp(16px, 5vw, 34px);
+    } */
+</style>
+{% endblock css %}
+{% block body %}
+<!-- ======= Hero Section ======= -->
+<section id="hero" class="d-flex align-items-center">
+    <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
+      <div class="row justify-content-center">
+        <div class="col-xl-7 col-lg-9 text-center">
+          <img src="{% static 'image/logo.jfif' %}" alt="" style="height: 40%;width: 20%;">
+          <h1>Welcome To Dart</h1>
+          <h2>Data Analysis and Reporting Tool</h2>
+        </div>
+      </div>
+
+      <div class="row icon-boxes">
+        <div class="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0" data-aos="zoom-in" data-aos-delay="200">
+          <div class="icon-box">
+            <div class="icon"><i class="ri-stack-line"></i></div>
+            <h4 class="title"><a href="{% url 'product' %}">Menu</a></h4>
+            <p class="description">Effortlessly manage your restaurant's inventory with our dedicated inventory page. Take control of your kitchen's supplies and eliminate unnecessary waste with our intuitive inventory management system.</p>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0" data-aos="zoom-in" data-aos-delay="300">
+          <div class="icon-box">
+            <div class="icon"><i class="bi bi-graph-up-arrow"></i></div>
+            <h4 class="title"><a href="{% url 'report' %}">Report</a></h4>
+            <p class="description">Gain valuable insights into your restaurant's performance with our comprehensive reporting page. Track sales trends, analyze customer preferences, and optimize your operations for maximum efficiency and profitability. Harness the power of data to make informed decisions and drive your business towards success.</p>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0" data-aos="zoom-in" data-aos-delay="400">
+          <div class="icon-box">
+            <div class="icon"><i class="bi bi-pencil-square"></i></div>
+            <h4 class="title"><a href="{% url 'order' %}">Order</a></h4>
+            <p class="description">Take control of your restaurant's online orders with our intuitive order page interface, empowering you to efficiently manage incoming orders, track inventory, and enhance customer satisfaction with every transaction.</p>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0" data-aos="zoom-in" data-aos-delay="500">
+            
+          <div class="icon-box">
+            <div class="icon"><i class="bi bi-clock-history"></i></div>
+            <h4 class="title"><a href="{% url 'order-history' %}">Order history</a></h4>
+            <p class="description">Effortlessly manage your restaurant's order history. Access detailed records of all past orders, streamline operations, and gain valuable insights to optimize your business performance.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section><!-- End Hero -->
+
+  
+  <div id="preloader"></div>
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+{% endblock body %}
+{% block js %}
+{% endblock js %}

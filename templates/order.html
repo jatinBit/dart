@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% block orderActive %}active{% endblock orderActive %}
+{% block orderTarget %} target='_blank'{% endblock orderTarget %}
+{% block css %}
+<style>
+  @media only screen and (min-width: 768px) {
+            /* tablets and desktop */
+        }
+
+        @media only screen and (max-width: 767px) {
+            /* phones */
+            body{
+              font-size: 1rem;
+            }
+            #orderList{
+              font-size: smaller;
+            }
+            #orderList button{
+              font-size: smaller;
+            }
+            #btn{
+              padding: 0 5px;
+              margin: 0;
+            }
+            #btnCancel{
+              padding: 0 5px;
+              margin: 0 3px;
+            }
+        }
+
+        @media only screen and (max-width: 767px) and (orientation: portrait) {
+            /* portrait phones */
+            
+        }
+</style>
+{% endblock css %}
+{% block body %}
+
+<div class="container my-3">
+  <form action={% url 'order' %} method="post">
+    {% csrf_token %}
+    <div class="container w-75 my-4">
+        <h1>Order</h1>
+        <div class="mb-3">
+          <label for="phone" class="form-label">phone<span class="text-danger ">*</span></label>
+          <input type="number" name="phone" class="form-control" id="phone" required oninput="checkUser()">
+        </div>
+        <div class="mb-3">
+          <label for="customerName" class="form-label">Customer Name<span class="text-danger ">*</span></label>
+          <input class="form-control dropdown-toggle" name="customerName" id="customerName"  oninput='checkUser(this)'  placeholder="Enter Customer name" data-bs-toggle="dropdown" autocomplete="off" required>
+            <ul class="dropdown-menu" id="dropdown-menu" style="max-height: 20vh;overflow-y: auto;">
+                {% for customer in customers %}
+                  <li><a class="dropdown-item names" onclick="updateForm('{{customer.id}}','{{customer.name}}','{{customer.phone}}','{{product.email}}')" id="{{customer.id}}">{{customer.name}}</a></li>
+                {% endfor %}
+              </ul>
+            <input type="hidden" name="customerId" id="customerId" value="">
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">email</label>
+          <input type="email" name="email" id="customerEmail" class="form-control" id="email" >
+        </div>
+        <div class="mb-3">
+            <label for="product" class="form-label">product<span class="text-danger ">*</span></label>
+            
+            <input class="form-control dropdown-toggle"  oninput="update()" id="product" placeholder="Type to search..." data-bs-toggle="dropdown" autocomplete="off">
+            <ul class="dropdown-menu" id="dropdown-menu" style="max-height: 20vh;overflow-y: auto;">
+                {% for product in products %}
+                {% if product.is_active %}
+                {% if product.category %}
+                <li><a class="dropdown-item products" onclick="updateList('{{product.id}}','{{product.name}}','{{product.price}}','{{product.category}}')" id="{{product.id}}">{{product.name}} ({{product.category}})</a></li>
+                {% else %}
+                <li><a class="dropdown-item products" onclick="updateList('{{product.id}}','{{product.name}}','{{product.price}}')" id="{{product.id}}">{{product.name}}</a></li>
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+              </ul>  
+              <input type="hidden" id="hidden" name="items" value="">
+        </div>
+        <div class="form-check form-check-inline mb-2">
+          <input class="form-check-input" type="radio" name="saleOptions" id="offline" value="Offline Sale" checked onclick="check()">
+          <label class="form-check-label" for="offline">Offline Sale</label>
+        </div>
+        <div class="form-check form-check-inline mb-2">
+          <input class="form-check-input" type="radio" name="saleOptions" id="online" value="Online Sale" onclick="check()">
+          <label class="form-check-label" for="online">Online Sale</label>
+        </div>
+        <div class="mb-2" id="order_state_container">
+          <div class="row">
+            <div class="col">
+                <div class="d-inline-block me-1">Dine In</div>
+                <div class="form-check form-switch d-inline-block">
+                    <input type="checkbox" class="form-check-input" id="order_state" style="cursor: pointer;" name="order_state" value="Takeaway">
+                    <label for="order_state" class="form-check-label">Takeaway</label>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="mb-2" id="online_option_container" style="display: none;">
+          
+          <select class="form-select" aria-label="onlineOption" name="onlineOption">
+            <option selected value="Zomato">Zomato</option>
+            <option value="Swiggy">Swiggy</option>
+          </select>
+        </div>
+        <div class="mb-2" id="order_state_container">
+          <div class="row">
+            <div class="col">
+                {% comment %} <div class="d-inline-block me-1">split</div> {% endcomment %}
+                <div class="form-check form-switch d-inline-block">
+                    <input type="checkbox" class="form-check-input" id="split" onchange="splitOption(this)" style="cursor: pointer;" name="split" value=true>
+                    <label for="split" class="form-check-label">Split</label>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="mb-2" id="splitAmountOptions" style="display: none;">
+          <div class="row">
+            <div class="col-6">
+              <label for="amount1" class="form-label">Amount 1<span class="text-danger ">*</span></label>
+              <input type="number" name="amount1" class="form-control" id="amount1"  oninput="updateSplitAmount(this)">            
+            </div>
+            <div class="col-6">
+              <label for="amount2" class="form-label">Amount 2<span class="text-danger ">*</span></label>
+              <input type="number" name="amount2" class="form-control" id="amount2"  oninput="updateSplitAmount(this)">
+            </div>
+          </div>
+          
+        </div>
+        <div class="mb-2">
+          <select class="form-select" aria-label="paymentOptions" name="paymentOptions">
+            <option selected value="Cash">Cash</option>
+            <option value="Amazon Pay">Amazon Pay</option>
+            <option value="Paytm">Paytm</option>
+            <option value="Google Pay">Google Pay</option>
+            <option value="Card">Card</option>
+            <option value="PhonePe">PhonePe</option>
+          </select>
+      </div>
+        <div class="mb-2" id="paymentOption2" style="display: none;">
+          <select class="form-select" aria-label="paymentOptions2" name="paymentOptions2">
+            <option selected value="Cash">Cash</option>
+            <option value="Amazon Pay">Amazon Pay</option>
+            <option value="Paytm">Paytm</option>
+            <option value="Google Pay">Google Pay</option>
+            <option value="Card">Card</option>
+            <option value="PhonePe">PhonePe</option>
+          </select>
+      </div>
+      <div class="row">
+        <div class="mb-0 col-sm-4">
+            <label for="itemCost" class="form-label">Item Total <b>&#x20B9</b></label>
+            <b><span id="itemCost">0</span></b>
+          </div>
+        <div class="mb-1 col-sm-4">
+            <label for="taxCost" class="form-label">Tax amount <b>&#x20B9</b></label>
+            <b><span id="taxCost" name="taxCost">0</span></b>
+          </div>
+        </div>
+        <div class="mb-1">
+            <label for="totalCost" class="form-label">Total amount <b>&#x20B9</b></label>
+            <b><span id="totalCost" name="totalCost">0</span></b>
+          </div>
+        
+        </div>
+        <hr>
+        <div class="container" id="orderList">
+          <h2>Order Details:</h2>
+          <div class="row">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th scope="col">Product</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Price</th>
+                <th scope="col">total</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody id="orderDetails">
+              
+            </tbody>
+          </table>
+        </div>
+    </div>
+    <hr>
+    <button type="submit" id="orderBtn" disabled class="btn btn-primary mr-auto">Place Order</button>
+  </form>
+</div>
+{% endblock body %}
+{% block js %}
+<script>
+    // to cancel on reload form resubmit request
+    if ( window.history.replaceState ) {
+      window.history.replaceState( null, null, window.location.href );
+    }
+
+    function splitOption(element) {
+      if(element.checked==true){
+        document.getElementById('paymentOption2').style.display='';
+        document.getElementById('splitAmountOptions').style.display='';
+        document.getElementById('amount1').required=true;
+        document.getElementById('amount2').required=true;
+      }else{
+        document.getElementById('paymentOption2').style.display='none';
+        document.getElementById('splitAmountOptions').style.display='none';
+        document.getElementById('amount1').required=false;
+        document.getElementById('amount2').required=false;
+      }
+    }
+
+    function updateSplitAmount(element) {
+      let amount=0;
+      if (totalCost-element.value>=0) {
+        amount=itemCost-element.value;
+      }
+      if(element.id=='amount1'){
+        document.getElementById('amount2').value=amount;
+      }else{
+        document.getElementById('amount1').value=amount;
+      }
+    }
+
+    // search product
+    function update() {
+        let productInput=document.getElementById('product');
+        let dropdownMenu=document.getElementById('dropdown-menu');
+        let els=document.getElementsByClassName('products');
+        for(var i = 0; i < els.length; i++){
+                if (els[i].innerHTML.search(new RegExp(productInput.value, "i"))!=-1) {
+                    els[i].style.display='block';
+                }else{
+                    els[i].style.display='none';
+                }
+            }
+        // console.log(productInput.value);
+        }
+      let itemCount=0;
+      let items={};
+      let hidden=document.getElementById('hidden');
+      let totalCost=parseFloat(0);
+      let itemCost=parseFloat(0);
+      let tax=parseFloat(0);
+      let itemSum=document.getElementById('totalCost');
+      let taxSum=document.getElementById('taxCost');
+      let finalSum=document.getElementById('itemCost');
+      let orderBtn=document.getElementById('orderBtn');
+      let amount1=document.getElementById('amount1');
+
+      
+    function addTax(total) {
+      if(total>0){
+        tax=(0.05)*total;
+        console.log(tax,total-tax)
+        return total-tax
+      }
+      tax=0;
+      return 0
+    }
+
+      function updateList(id,product,price,category=null) {
+        let orderDetails=document.getElementById('orderDetails');
+        if (category) {
+          category=`(${category})`
+        }else{
+          category="";
+        }
+        if (!document.getElementById(`item-${id}`)){
+          orderDetails.innerHTML+=`<tr class="table-secondary" id="item-${id}">
+                                  <td>${product} ${category}</td>
+                                  <td><button id="btn" type="button" class="btn-sm btn-primary py-0" onclick="subtract(${id},${price})">-</button><span id="qty-${id}"> 1 </span><button id="btn" type="button" class="btn-sm btn-primary py-0" onclick="add(${id},${price})">+</button></td>
+                                  <td>&#x20B9 ${price}</td>
+                                  <td>&#x20B9 <span id="total-${id}">${price}</span></td>
+                                  <td><button id="btnCancel" type="button" class="btn btn-danger" onclick="removeItem(${id},${price})">Cancel</button></td>
+                                </tr>`
+         itemCount+=1;
+         items[id]=1;
+         hidden.value=JSON.stringify(items);
+         totalCost=totalCost+parseFloat(price);
+         itemCost=totalCost+tax;
+         totalCost=addTax(totalCost+tax);
+         finalSum.innerText=totalCost;
+         taxSum.innerText=tax;
+         itemSum.innerText=itemCost;
+         updateSplitAmount(amount1);
+         if (itemCount>0) {
+           orderBtn.disabled=false;
+         }
+        }
+                               
+    }  
+
+    function removeItem(id) {
+      console.log(id)
+      let item=document.getElementById(`item-${id}`);
+      itemCount-=1;
+      delete items[id]
+      hidden.value=JSON.stringify(items);
+      let itemTotalCost=document.getElementById(`total-${id}`);
+      totalCost=totalCost-parseFloat(itemTotalCost.innerText);
+      itemCost=totalCost+tax;
+      totalCost=addTax(totalCost+tax);
+      finalSum.innerText=totalCost;
+      taxSum.innerText=tax;
+      itemSum.innerText=itemCost;
+      updateSplitAmount(amount1);
+      item.remove();
+      if (itemCount<=0) {
+           orderBtn.disabled=true;
+         }
+    }
+    function add(id,price) {
+      let qty=document.getElementById(`qty-${id}`);
+      let count=parseInt(qty.innerText);
+      qty.innerText=count+1;
+      // change total cost
+      let total=document.getElementById(`total-${id}`);
+      let totalPrice=parseFloat(total.innerText);
+      total.innerText=totalPrice+price;
+      items[id]=count+1;
+      hidden.value=JSON.stringify(items);
+      totalCost=totalCost+price;
+      itemCost=totalCost+tax;
+      totalCost=addTax(totalCost+tax);
+      finalSum.innerText=totalCost;
+      taxSum.innerText=tax;
+      itemSum.innerText=itemCost;
+      updateSplitAmount(amount1);
+    }
+    function subtract(id,price) {
+      let qty=document.getElementById(`qty-${id}`);
+      let count=parseInt(qty.innerText);
+      if (count==1) {
+        removeItem(id);
+      }
+      qty.innerText=count-1;
+      // change total cost
+      let total=document.getElementById(`total-${id}`);
+      let totalPrice=parseFloat(total.innerText);
+      total.innerText=totalPrice-price;
+      items[id]=count-1;
+      hidden.value=JSON.stringify(items);
+      totalCost=totalCost-price;
+      itemCost=totalCost+tax;
+      totalCost=addTax(totalCost+tax);
+      finalSum.innerText=totalCost;
+      taxSum.innerText=tax;
+      itemSum.innerText=itemCost;
+      updateSplitAmount(amount1);
+    }
+    
+    // on online sale dont show dine in and takeway option
+    function check() {
+      let online=document.getElementById('online');
+      let offline=document.getElementById('offline');
+      let order_state_container=document.getElementById('order_state_container');
+      let online_option_container=document.getElementById('online_option_container');
+      let order_state=document.getElementById('order_state');
+      if(online.checked){
+        order_state_container.style.display="none";
+        online_option_container.style.display="block";
+        order_state.checked=true;
+      }else if(offline.checked){
+        order_state_container.style.display="block";
+        online_option_container.style.display="none";
+      }
+    }
+    
+    // csrf token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+   
+    function checkUser(element) {
+      let els=document.getElementsByClassName('names');
+        for(var i = 0; i < els.length; i++){
+                if (els[i].innerHTML.search(new RegExp(element.value, "i"))!=-1) {
+                    els[i].style.display='';
+                }else{
+                    els[i].style.display='none';
+                    document.getElementById('customerId').value='';
+                }
+            }
+        // console.log(productInput.value);
+        }
+      let phoneNumber=document.getElementById('phone');
+      let customerName=document.getElementById('customerName');
+      let customerEmail=document.getElementById('customerEmail');
+      // }
+      //   {% comment %} fetch('customerExist',{
+      //       method: "POST",
+      //       body: JSON.stringify({
+      //           'number': phoneNumber
+      //         }),
+      //       headers: {
+      //           'X-CSRFToken': csrftoken,
+      //           "Content-type": "application/json; charset=UTF-8"
+      //         }
+      //   })
+      //     .then(response => response.json())
+      //     .then(data => {
+      //         console.log(data);
+      //         if ( Object.keys(data).length!=0) {
+      //           customerName.value=data.name;
+      //           customerEmail.value=data.email;
+      //           console.log("y")
+      //         }else{
+      //           console.log('n');
+      //           customerName.value='';
+      //           customerEmail.value='';
+      //         }
+      //     }); {% endcomment %}
+    
+    function updateForm(id,name,phone,email) {
+      let phoneNumber=document.getElementById('phone');
+      let customerName=document.getElementById('customerName');
+      let customerEmail=document.getElementById('customerEmail');
+      phoneNumber.value=phone;
+      customerName.value=name;
+      customerEmail.value=email;
+      document.getElementById('customerId').value=id;
+    }
+
+    </script>
+{% endblock js %}
